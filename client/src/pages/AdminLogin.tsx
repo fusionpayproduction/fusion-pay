@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import { Layout } from "@/components/Layout"
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { signInAdmin, onAuthStateChange, isValidAdminEmail } from "@/lib/firebase"
 
 const AdminLogin = () => {
   const navigate = useNavigate()
@@ -19,27 +20,39 @@ const AdminLogin = () => {
     password: ""
   })
 
+  // Check if user is already authenticated
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      if (user && isValidAdminEmail(user.email || "")) {
+        navigate("/admin/dashboard")
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [navigate])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Mock authentication
-    setTimeout(() => {
-    if (formData.email === "admin@paymentgateway.com" && formData.password === "admin123") {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back to Payment Gateway Admin Dashboard",
-        })
-        navigate("/admin/dashboard")
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password. Try admin@paymentgateway.com / admin123",
-          variant: "destructive"
-        })
-      }
+    try {
+      await signInAdmin(formData.email, formData.password)
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to FusionPay Admin Dashboard",
+      })
+      
+      navigate("/admin/dashboard")
+    } catch (error: any) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const handleGoogleLogin = () => {
@@ -77,7 +90,7 @@ const AdminLogin = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="admin@paymentgateway.com"
+                      placeholder="securepay.production@gmail.com"
                       className="pl-10"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}

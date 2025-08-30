@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Layout } from "@/components/Layout"
 import { Button } from "@/components/ui/button"
@@ -27,16 +27,38 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
+import { signOutAdmin, onAuthStateChange, isValidAdminEmail } from "@/lib/firebase"
 
 const AdminDashboard = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [apiKeys, setApiKeys] = useState<any[]>([])
   const [stats, setStats] = useState<any[]>([])
   const [recentTransactions, setRecentTransactions] = useState<any[]>([])
   const [visibleKeys, setVisibleKeys] = useState<{[key: string]: boolean}>({})
   const [isGenerating, setIsGenerating] = useState(false)
+
+  // Check authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      if (user && isValidAdminEmail(user.email || "")) {
+        setIsAuthenticated(true)
+        setUserEmail(user.email || "")
+        setIsCheckingAuth(false)
+      } else {
+        setIsAuthenticated(false)
+        setUserEmail("")
+        setIsCheckingAuth(false)
+        navigate("/admin/login")
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [navigate])
 
   // Fetch data from APIs
   const fetchDashboardData = async () => {
@@ -60,12 +82,21 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
-    })
-    navigate("/admin/login")
+  const handleLogout = async () => {
+    try {
+      await signOutAdmin()
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+      })
+      navigate("/admin/login")
+    } catch (error: any) {
+      toast({
+        title: "Logout Error",
+        description: error.message,
+        variant: "destructive"
+      })
+    }
   }
 
   const handleRefresh = () => {
@@ -155,6 +186,25 @@ const AdminDashboard = () => {
     return key.substring(0, 12) + "..." + key.substring(key.length - 4)
   }
 
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <Layout showHeader={false}>
+        <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  // Redirect to login if not authenticated (handled by useEffect)
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-background p-6">
@@ -168,6 +218,7 @@ const AdminDashboard = () => {
             <div>
               <h1 className="text-3xl font-bold">Admin Dashboard</h1>
               <p className="text-muted-foreground">Monitor your payment gateway transactions and analytics</p>
+              <p className="text-sm text-primary mt-1">Signed in as: {userEmail}</p>
             </div>
             
             <div className="flex gap-3">
