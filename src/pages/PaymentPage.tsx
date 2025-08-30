@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useParams, useNavigate } from "react-router-dom"
 import { Layout } from "@/components/Layout"
@@ -15,13 +15,27 @@ const PaymentPage = () => {
   const [selectedUpi, setSelectedUpi] = useState<string | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending")
   
-  // Mock order data
-  const orderData = {
-    orderId: orderId || "FP" + Date.now(),
-    amount: 1299.00,
-    merchantName: "TechStore Pro",
-    description: "Premium Wireless Headphones",
-    customerEmail: "customer@example.com"
+  const [orderData, setOrderData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch order data from API
+  const fetchOrderData = async () => {
+    try {
+      const response = await fetch(`/api/payment/initiate/${orderId}`)
+      const data = await response.json()
+      setOrderData(data)
+    } catch (error) {
+      console.error('Failed to fetch order data:', error)
+      setOrderData({
+        orderId: orderId || "ORDER_NOT_FOUND",
+        amount: 0,
+        merchantName: "Unknown Merchant",
+        description: "Order details unavailable",
+        customerEmail: "unknown@example.com"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const upiApps = [
@@ -55,18 +69,39 @@ const PaymentPage = () => {
     }
   ]
 
-  const handlePayment = () => {
-    if (!selectedUpi) return
+  const handlePayment = async () => {
+    if (!selectedUpi || !orderData) return
     
-    // Mock payment process
     setPaymentStatus("pending")
     
-    // Simulate payment processing
-    setTimeout(() => {
-      // 80% success rate for demo
-      const success = Math.random() > 0.2
-      setPaymentStatus(success ? "success" : "failed")
-    }, 3000)
+    try {
+      const response = await fetch('/api/payment/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderData.orderId,
+          upiApp: selectedUpi,
+          amount: orderData.amount
+        })
+      })
+      
+      // Poll for payment status
+      const pollStatus = async () => {
+        const statusResponse = await fetch(`/api/payment/status/${orderData.orderId}`)
+        const statusData = await statusResponse.json()
+        setPaymentStatus(statusData.status)
+      }
+      
+      // Poll every 2 seconds for status updates
+      const pollInterval = setInterval(pollStatus, 2000)
+      
+      // Stop polling after 60 seconds
+      setTimeout(() => clearInterval(pollInterval), 60000)
+      
+    } catch (error) {
+      console.error('Payment failed:', error)
+      setPaymentStatus("failed")
+    }
   }
 
   const StatusIcon = () => {
@@ -101,6 +136,44 @@ const PaymentPage = () => {
           action: null
         }
     }
+  }
+
+  // Initialize component
+  useEffect(() => {
+    if (orderId) {
+      fetchOrderData()
+    }
+  }, [orderId])
+
+  if (isLoading) {
+    return (
+      <Layout showHeader={false}>
+        <div className="min-h-screen flex items-center justify-center p-6 gradient-hero">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading order details...</p>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (!orderData) {
+    return (
+      <Layout showHeader={false}>
+        <div className="min-h-screen flex items-center justify-center p-6 gradient-hero">
+          <Card className="glass-card text-center">
+            <CardContent className="pt-8 pb-6">
+              <h2 className="text-2xl font-bold mb-2">Order Not Found</h2>
+              <p className="text-muted-foreground mb-6">The order you're looking for could not be found.</p>
+              <Button onClick={() => navigate("/")} className="gradient-primary">
+                Go Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    )
   }
 
   if (paymentStatus !== "pending") {

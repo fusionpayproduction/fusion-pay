@@ -32,105 +32,33 @@ const AdminDashboard = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [apiKeys, setApiKeys] = useState([
-    {
-      id: "fp_live_1234567890abcdef",
-      name: "Production API Key",
-      created: "2024-01-10 09:15",
-      lastUsed: "2024-01-15 13:45",
-      status: "active",
-      permissions: ["read", "write"]
-    },
-    {
-      id: "fp_test_abcdef1234567890",
-      name: "Test API Key",
-      created: "2024-01-05 16:30",
-      lastUsed: "2024-01-14 11:20",
-      status: "active",
-      permissions: ["read"]
-    }
-  ])
+  const [apiKeys, setApiKeys] = useState<any[]>([])
+  const [stats, setStats] = useState<any[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([])
   const [visibleKeys, setVisibleKeys] = useState<{[key: string]: boolean}>({})
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // Mock data
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "₹2,45,678",
-      change: "+12.5%",
-      trend: "up",
-      icon: DollarSign,
-      description: "Last 30 days"
-    },
-    {
-      title: "Transactions",
-      value: "1,234",
-      change: "+8.2%", 
-      trend: "up",
-      icon: Activity,
-      description: "This month"
-    },
-    {
-      title: "Active Merchants",
-      value: "156",
-      change: "+15.3%",
-      trend: "up", 
-      icon: Users,
-      description: "Currently active"
-    },
-    {
-      title: "Success Rate",
-      value: "99.2%",
-      change: "-0.3%",
-      trend: "down",
-      icon: CheckCircle,
-      description: "Last 7 days"
-    }
-  ]
+  // Fetch data from APIs
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch stats
+      const statsResponse = await fetch('/api/admin/stats')
+      const statsData = await statsResponse.json()
+      setStats(statsData)
 
-  const recentTransactions = [
-    {
-      id: "FP1702845234",
-      merchant: "TechStore Pro",
-      amount: 1299.00,
-      status: "success",
-      timestamp: "2024-01-15 14:32",
-      upiApp: "GPay"
-    },
-    {
-      id: "FP1702845123",
-      merchant: "Fashion Hub",
-      amount: 2599.00,
-      status: "success", 
-      timestamp: "2024-01-15 14:28",
-      upiApp: "PhonePe"
-    },
-    {
-      id: "FP1702845098",
-      merchant: "BookStore Online",
-      amount: 499.00,
-      status: "failed",
-      timestamp: "2024-01-15 14:25",
-      upiApp: "Paytm"
-    },
-    {
-      id: "FP1702845067",
-      merchant: "GroceryMart",
-      amount: 1850.00,
-      status: "pending",
-      timestamp: "2024-01-15 14:22",
-      upiApp: "BHIM"
-    },
-    {
-      id: "FP1702845034",
-      merchant: "ElectroWorld", 
-      amount: 15999.00,
-      status: "success",
-      timestamp: "2024-01-15 14:18",
-      upiApp: "GPay"
+      // Fetch transactions
+      const transactionsResponse = await fetch('/api/admin/transactions')
+      const transactionsData = await transactionsResponse.json()
+      setRecentTransactions(transactionsData)
+
+      // Fetch API keys
+      const keysResponse = await fetch('/api/admin/api-keys')
+      const keysData = await keysResponse.json()
+      setApiKeys(keysData)
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error)
     }
-  ]
+  }
 
   const handleLogout = () => {
     toast({
@@ -142,13 +70,13 @@ const AdminDashboard = () => {
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    setTimeout(() => {
+    fetchDashboardData().finally(() => {
       setIsRefreshing(false)
       toast({
-        title: "Dashboard Refreshed",
+        title: "Dashboard Refreshed", 
         description: "All data has been updated successfully",
       })
-    }, 2000)
+    })
   }
 
   const getStatusBadge = (status: string) => {
@@ -274,7 +202,8 @@ const AdminDashboard = () => {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {stats.map((stat, index) => (
+          {stats.length > 0 ? (
+            stats.map((stat, index) => (
               <motion.div
                 key={stat.title}
                 initial={{ y: 20, opacity: 0 }}
@@ -305,7 +234,16 @@ const AdminDashboard = () => {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Analytics Data</h3>
+              <p className="text-muted-foreground">
+                Revenue and transaction metrics will appear here once you start processing payments
+              </p>
+            </div>
+          )}
           </motion.div>
 
           {/* API Keys Management */}
@@ -457,38 +395,50 @@ const AdminDashboard = () => {
                         <TableHead>Timestamp</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                      {recentTransactions.map((transaction, index) => (
-                        <motion.tr
-                          key={transaction.id}
-                          initial={{ x: -20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ delay: 0.3 + index * 0.05 }}
-                          className="hover:bg-muted/50 transition-colors"
-                        >
-                          <TableCell className="font-mono text-sm">
-                            {transaction.id}
+                     <TableBody>
+                      {recentTransactions.length > 0 ? (
+                        recentTransactions.map((transaction, index) => (
+                          <motion.tr
+                            key={transaction.id}
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.3 + index * 0.05 }}
+                            className="hover:bg-muted/50 transition-colors"
+                          >
+                            <TableCell className="font-mono text-sm">
+                              {transaction.id}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {transaction.merchant}
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              ₹{transaction.amount.toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{transaction.upiApp}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(transaction.status)}
+                                {getStatusBadge(transaction.status)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {transaction.timestamp}
+                            </TableCell>
+                          </motion.tr>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">No Transactions</h3>
+                            <p className="text-muted-foreground">
+                              Transaction data will appear here once payments start flowing through your gateway
+                            </p>
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {transaction.merchant}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            ₹{transaction.amount.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{transaction.upiApp}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(transaction.status)}
-                              {getStatusBadge(transaction.status)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {transaction.timestamp}
-                          </TableCell>
-                        </motion.tr>
-                      ))}
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
