@@ -298,7 +298,7 @@ const AdminDashboard = () => {
                               {key.status}
                             </Badge>
                             <div className="flex gap-1">
-                              {key.permissions.map(permission => (
+                              {key.permissions.map((permission: string) => (
                                 <Badge key={permission} variant="outline" className="text-xs">
                                   {permission}
                                 </Badge>
