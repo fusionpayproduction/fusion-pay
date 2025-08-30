@@ -25,16 +25,16 @@ const AdminLogin = () => {
 
     // Mock authentication
     setTimeout(() => {
-      if (formData.email === "admin@fusionpay.com" && formData.password === "admin123") {
+    if (formData.email === "admin@paymentgateway.com" && formData.password === "admin123") {
         toast({
           title: "Login Successful",
-          description: "Welcome back to FusionPay Admin Dashboard",
+          description: "Welcome back to Payment Gateway Admin Dashboard",
         })
         navigate("/admin/dashboard")
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password. Try admin@fusionpay.com / admin123",
+          description: "Invalid email or password. Try admin@paymentgateway.com / admin123",
           variant: "destructive"
         })
       }
@@ -64,7 +64,7 @@ const AdminLogin = () => {
               </div>
               <CardTitle className="text-2xl">Admin Portal</CardTitle>
               <CardDescription>
-                Secure access to FusionPay dashboard
+                Secure access to Payment Gateway dashboard
               </CardDescription>
             </CardHeader>
             
@@ -77,7 +77,7 @@ const AdminLogin = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="admin@fusionpay.com"
+                      placeholder="admin@paymentgateway.com"
                       className="pl-10"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
@@ -145,7 +145,7 @@ const AdminLogin = () => {
 
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <p>Demo Credentials:</p>
-                <p className="font-mono text-xs">admin@fusionpay.com / admin123</p>
+                <p className="font-mono text-xs">admin@paymentgateway.com / admin123</p>
               </div>
             </CardContent>
           </Card>

@@ -52,7 +52,7 @@ const Index = () => {
           >
             <Badge variant="secondary" className="mb-6 px-4 py-2">
               <Zap className="w-4 h-4 mr-2" />
-              Enterprise UPI Gateway
+              Private Payment Gateway
             </Badge>
           </motion.div>
           
@@ -62,7 +62,7 @@ const Index = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            FusionPay
+            My Payment Gateway
           </motion.h1>
           
           <motion.p 
@@ -71,7 +71,7 @@ const Index = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            Secure, fast, and reliable private UPI payment gateway for enterprises. 
+            Secure, fast, and reliable private UPI payment gateway for your projects. 
             Bank-grade security with industry-leading success rates.
           </motion.p>
           
@@ -128,10 +128,10 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Why Choose <span className="bg-gradient-primary bg-clip-text text-transparent">FusionPay</span>?
+              Why Choose <span className="bg-gradient-primary bg-clip-text text-transparent">My Payment Gateway</span>?
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Built for enterprises that demand reliability, security, and performance
+              Built for projects that demand reliability, security, and performance
             </p>
           </motion.div>
           
@@ -171,7 +171,7 @@ const Index = () => {
               <Clock className="w-16 h-16 mx-auto mb-6 text-primary" />
               <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
               <p className="text-xl text-muted-foreground mb-8">
-                Join enterprises worldwide who trust FusionPay for their payment processing needs
+                Integrate seamless UPI payments into your projects with ease
               </p>
               <Button size="lg" className="text-lg px-8 py-6" asChild>
                 <Link to="/admin/login">

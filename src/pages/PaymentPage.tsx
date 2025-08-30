@@ -169,7 +169,7 @@ const PaymentPage = () => {
               </div>
               <CardTitle className="text-xl">Complete Your Payment</CardTitle>
               <CardDescription>
-                Secure payment powered by FusionPay
+                Secure payment powered by My Payment Gateway
               </CardDescription>
             </CardHeader>
             
